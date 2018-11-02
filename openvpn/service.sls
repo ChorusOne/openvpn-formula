@@ -2,6 +2,17 @@
 
 {% from "openvpn/map.jinja" import map with context %}
 
+{% if salt['grains.has_value']('systemd') %}
+  {% if salt['pillar.get']('openvpn', {}).get('additional_capabilities', None) %}
+openvpn_system_append_capabilities:
+  file.line:
+    - name: /lib/systemd/system/openvpn@.service
+    - match: CapabilityBoundingSet=
+    - content: CapabilityBoundingSet={{ (salt['pillar.get']('openvpn', {}).get('additional_capabilities')+map.default_capabilities)|join(' ') }}
+    - mode: replace
+  {% endif %}
+{% endif %}
+
 
 {% if map.multi_services %}
 # If the OS is using systemd, then each openvpn config has its own service
